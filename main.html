@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1e272e;
+      color: #ffffff;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #2f3640;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input {
+      width: calc(100% - 40px);
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .form-group{
+        position: relative;
+    }
+
+    .toggle-password {
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: 10px;
+      position: absolute;
+      top: 30px;
+      right: 35px;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin-top: 10px;
+      background-color: #0984e3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #74b9ff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #0984e3;
+      color: white;
+    }
+
+    td a {
+      color: #74b9ff;
+      text-decoration: none;
+    }
+
+    .action-btn {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .edit-btn {
+      background-color: #00cec9;
+      color: white;
+    }
+
+    .delete-btn {
+      background-color: #d63031;
+      color: white;
+    }
+
+    .copy-btn {
+      background-color: #6c5ce7;
+      color: white;
+    }
+
+    .edit-btn:hover {
+      background-color: #55efc4;
+    }
+
+    .delete-btn:hover {
+      background-color: #e17055;
+    }
+
+    .copy-btn:hover {
+      background-color: #a29bfe;
+    }
+  </style>
+</head>
+<body>
+  <h1>Password Manager</h1>
+  <div class="container">
+    <div class="form-group">
+      <label for="site">Website/App URL:</label>
+      <input type="text" id="site" placeholder="e.g., https://www.gmail.com">
+    </div>
+    <div class="form-group">
+      <label for="username">Username/Email:</label>
+      <input type="text" id="username" placeholder="e.g., user@example.com">
+    </div>
+    <div class="form-group">
+      <label for="password">Password:</label>
+      <input type="password" id="password" placeholder="e.g., password123">
+      <span class="toggle-password">👁️</span>
+    </div>
+    <button id="addPassword">Add Password</button>
+
+    <h2>Saved Passwords</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Website/App</th>
+          <th>Username</th>
+          <th>Password</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="passwordList"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const siteInput = document.getElementById('site');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const togglePassword = document.querySelector('.toggle-password');
+    const addPasswordButton = document.getElementById('addPassword');
+    const passwordList = document.getElementById('passwordList');
+
+    let passwords = JSON.parse(localStorage.getItem('passwords')) || [];
+
+    const renderPasswords = () => {
+      passwordList.innerHTML = '';
+      passwords.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <span>${item.site}</span>
+            <button class="action-btn copy-btn" onclick="copyToClipboard('${item.site}')">Copy</button>
+          </td>
+          <td>
+            <span>${item.username}</span>
+            <button class="action-btn copy-btn" onclick="copyToClipboard('${item.username}')">Copy</button>
+          </td>
+          <td>
+            <span>${'*'.repeat(item.password.length)}</span>
+            <button class="action-btn copy-btn" onclick="copyToClipboard('${item.password}')">Copy</button>
+          </td>
+          <td>
+            <button class="action-btn edit-btn" onclick="editPassword(${index})">Edit</button>
+            <button class="action-btn delete-btn" onclick="deletePassword(${index})">Delete</button>
+          </td>
+        `;
+        passwordList.appendChild(row);
+      });
+    };
+
+    const addPassword = () => {
+      const site = siteInput.value.trim();
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+      if (!site || !username || !password) {
+        alert('All fields are required!');
+        return;
+      }
+      passwords.push({ site, username, password });
+      localStorage.setItem('passwords', JSON.stringify(passwords));
+      siteInput.value = '';
+      usernameInput.value = '';
+      passwordInput.value = '';
+      renderPasswords();
+    };
+
+    const editPassword = (index) => {
+      const newSite = prompt('Edit Site URL:', passwords[index].site);
+      const newUsername = prompt('Edit Username:', passwords[index].username);
+      const newPassword = prompt('Edit Password:', passwords[index].password);
+      if (newSite && newUsername && newPassword) {
+        passwords[index] = { site: newSite, username: newUsername, password: newPassword };
+        localStorage.setItem('passwords', JSON.stringify(passwords));
+        renderPasswords();
+      }
+    };
+
+    const deletePassword = (index) => {
+      if (confirm('Are you sure you want to delete this entry?')) {
+        passwords.splice(index, 1);
+        localStorage.setItem('passwords', JSON.stringify(passwords));
+        renderPasswords();
+      }
+    };
+
+    const copyToClipboard = (text) => {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard!');
+      });
+    };
+
+    togglePassword.addEventListener('click', () => {
+      const type = passwordInput.type === 'password' ? 'text' : 'password';
+      passwordInput.type = type;
+      togglePassword.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+
+    addPasswordButton.addEventListener('click', addPassword);
+    renderPasswords();
+  </script>
+</body>
+</html>
